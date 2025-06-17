@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.36.4
 	github.com/aws/aws-sdk-go-v2/config v1.29.16
 	github.com/aws/aws-sdk-go-v2/service/bedrockagentruntime v1.45.1
+	github.com/aws/aws-sdk-go-v2/service/lambda v1.71.4
 	github.com/google/uuid v1.6.0
 	github.com/mark3labs/mcp-go v0.32.0
 )
