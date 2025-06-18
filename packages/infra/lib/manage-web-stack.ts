@@ -1,4 +1,4 @@
-import {aws_lambda, CfnOutput, Stack, StackProps} from 'aws-cdk-lib';
+import {aws_lambda, CfnOutput, Stack, StackProps, RemovalPolicy} from 'aws-cdk-lib';
 import {Construct} from 'constructs';
 import {Architecture, Code, LayerVersion, Runtime} from "aws-cdk-lib/aws-lambda";
 import {HttpApi, HttpMethod} from "aws-cdk-lib/aws-apigatewayv2";
@@ -6,10 +6,27 @@ import {HttpLambdaIntegration} from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import {NagSuppressions} from "cdk-nag";
 import {LogGroup, RetentionDays} from "aws-cdk-lib/aws-logs";
 import {CfnStage} from "aws-cdk-lib/aws-apigatewayv2";
+import {AttributeType, BillingMode, Table} from "aws-cdk-lib/aws-dynamodb";
 
 export class ManageWebStack extends Stack {
     constructor(scope: Construct, id: string, props?: StackProps) {
         super(scope, id, props);
+
+        // DynamoDB One Table 생성
+        const mainTable = new Table(this, "MainTable", {
+            tableName: "ManageWebMainTable",
+            partitionKey: {
+                name: "PK",
+                type: AttributeType.STRING
+            },
+            sortKey: {
+                name: "SK",
+                type: AttributeType.STRING
+            },
+            billingMode: BillingMode.PAY_PER_REQUEST,
+            removalPolicy: RemovalPolicy.DESTROY, // 개발 환경용, 프로덕션에서는 RETAIN 사용
+            pointInTimeRecovery: true
+        });
 
         const webAdapterLayer = LayerVersion.fromLayerVersionArn(
             this,
@@ -62,10 +79,14 @@ export class ManageWebStack extends Stack {
             environment: {
                 AWS_LWA_PORT: "3000",
                 AWS_LAMBDA_EXEC_WRAPPER: "/opt/bootstrap",
-                AWS_LWA_ENABLE_COMPRESSION: "true"
+                AWS_LWA_ENABLE_COMPRESSION: "true",
+                TABLE_NAME: mainTable.tableName
             },
             logRetention: RetentionDays.ONE_MONTH,
         });
+
+        // Lambda 함수에 DynamoDB 읽기/쓰기 권한 부여
+        mainTable.grantReadWriteData(manageWebFunction);
 
         // API Gateway 액세스 로그용 CloudWatch 로그 그룹 생성
         const apiLogGroup = new LogGroup(this, "ManageWebApiLogGroup", {
@@ -123,6 +144,12 @@ export class ManageWebStack extends Stack {
         new CfnOutput(this, "ApiEndpoint", {
             value: httpApi.url!,
             description: "HTTP API endpoint URL"
+        });
+
+        // DynamoDB 테이블 이름 출력
+        new CfnOutput(this, "DynamoDBTableName", {
+            value: mainTable.tableName,
+            description: "DynamoDB table name for one table design"
         });
 
         // CDK Nag Suppressions
