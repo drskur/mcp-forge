@@ -1,4 +1,4 @@
-import { Component, Setter } from "solid-js";
+import { Component, Setter, createSignal } from "solid-js";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -8,13 +8,29 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { ServerFormData } from "@/types/server";
 
 interface AddServerDialogProps {
   open: boolean;
   setOpen: Setter<boolean>;
+  onSubmit: (data: ServerFormData) => void;
+  initialData?: ServerFormData;
 }
 
-export const AddServerDialog: Component<AddServerDialogProps> = (props) => {
+export const ServerFormDialog: Component<AddServerDialogProps> = props => {
+  const [name, setName] = createSignal(props.initialData?.name ?? "");
+  const [description, setDescription] = createSignal(
+    props.initialData?.description ?? ""
+  );
+
+  const handleSubmit = () => {
+    props.onSubmit({
+      name: name(),
+      description: description(),
+    });
+    props.setOpen(false);
+  };
+
   return (
     <Dialog open={props.open} onOpenChange={props.setOpen}>
       <DialogContent>
@@ -32,19 +48,23 @@ export const AddServerDialog: Component<AddServerDialogProps> = (props) => {
             <input
               id="name"
               type="text"
+              value={name()}
+              onInput={e => setName(e.target.value)}
               class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="My Server"
             />
           </div>
           <div class="grid gap-2">
-            <label for="command" class="text-sm font-medium">
-              Command
+            <label for="description" class="text-sm font-medium">
+              Description
             </label>
             <input
-              id="command"
+              id="description"
               type="text"
+              value={description()}
+              onInput={e => setDescription(e.target.value)}
               class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              placeholder="npx @modelcontextprotocol/server-memory"
+              placeholder="A brief description of the server"
             />
           </div>
         </div>
@@ -52,7 +72,7 @@ export const AddServerDialog: Component<AddServerDialogProps> = (props) => {
           <Button variant="outline" onClick={() => props.setOpen(false)}>
             Cancel
           </Button>
-          <Button onClick={() => props.setOpen(false)}>Add Server</Button>
+          <Button onClick={handleSubmit}>Add Server</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

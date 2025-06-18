@@ -1,7 +1,7 @@
 import { Component, createSignal } from "solid-js";
 import { MainLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { AddServerDialog } from "@/components/dialog/AddServerDialog";
+import { ServerFormDialog } from "@/components/dialog/ServerFormDialog";
 
 const Servers: Component = () => {
   const [open, setOpen] = createSignal(false);
@@ -14,7 +14,11 @@ const Servers: Component = () => {
           <Button onClick={() => setOpen(true)}>Add Server</Button>
         </div>
 
-        <AddServerDialog open={open()} setOpen={setOpen} />
+        <ServerFormDialog
+          open={open()}
+          setOpen={setOpen}
+          onSubmit={data => console.log("onSubmit", data)}
+        />
 
         <div class="grid gap-4">
           {/* Server list will go here */}
