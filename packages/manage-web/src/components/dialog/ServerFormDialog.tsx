@@ -23,6 +23,11 @@ export const ServerFormDialog: Component<AddServerDialogProps> = props => {
     props.initialData?.description ?? ""
   );
 
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+  };
+
   const handleSubmit = () => {
     props.onSubmit({
       name: name(),
@@ -31,8 +36,16 @@ export const ServerFormDialog: Component<AddServerDialogProps> = props => {
     props.setOpen(false);
   };
 
+  const handleOpenChange = (isOpen: boolean) => {
+    props.setOpen(isOpen);
+    // 다이얼로그가 닫힐 때 폼 초기화
+    if (!isOpen) {
+      resetForm();
+    }
+  };
+
   return (
-    <Dialog open={props.open} onOpenChange={props.setOpen}>
+    <Dialog open={props.open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New Server</DialogTitle>

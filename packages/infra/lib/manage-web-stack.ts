@@ -25,7 +25,23 @@ export class ManageWebStack extends Stack {
             },
             billingMode: BillingMode.PAY_PER_REQUEST,
             removalPolicy: RemovalPolicy.DESTROY, // 개발 환경용, 프로덕션에서는 RETAIN 사용
-            pointInTimeRecovery: true
+            pointInTimeRecoverySpecification: {
+                pointInTimeRecoveryEnabled: true,
+                recoveryPeriodInDays: 7,
+            }
+        });
+
+        // GSI: Entity 타입별 생성일 기준 정렬 조회용
+        mainTable.addGlobalSecondaryIndex({
+            indexName: "EntityByCreatedAt",
+            partitionKey: {
+                name: "EntityType",
+                type: AttributeType.STRING
+            },
+            sortKey: {
+                name: "CreatedAtId",
+                type: AttributeType.STRING
+            }
         });
 
         const webAdapterLayer = LayerVersion.fromLayerVersionArn(
@@ -47,8 +63,8 @@ export class ManageWebStack extends Stack {
                                     stdio: 'inherit'
                                 });
                                 // 필요한 파일들 복사
-                                execSync(`cp -r ../manage-web/.output/* ${outputDir}/`, { stdio: 'inherit' });
-                                execSync(`cp ../manage-web/run.sh ${outputDir}/`, { stdio: 'inherit' });
+                                execSync(`cp -r ../manage-web/.output/* ${outputDir}/`, {stdio: 'inherit'});
+                                execSync(`cp ../manage-web/run.sh ${outputDir}/`, {stdio: 'inherit'});
                                 return true;
                             } catch (err) {
                                 console.error('Local bundling failed:', err);
@@ -162,6 +178,18 @@ export class ManageWebStack extends Stack {
                 }
             ],
             true
+        );
+
+        // DynamoDB GSI 접근을 위한 wildcard 권한 Suppression
+        NagSuppressions.addResourceSuppressionsByPath(
+            this,
+            "/ManageWebStack/ManageWebFunction/ServiceRole/DefaultPolicy/Resource",
+            [
+                {
+                    id: "AwsSolutions-IAM5",
+                    reason: "Lambda function needs wildcard permissions to access DynamoDB GSI indexes for querying servers by creation date"
+                }
+            ]
         );
 
         // API Gateway 인증 관련 Nag Suppression
