@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 @layer base {
   :root {
@@ -68,9 +66,26 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer components {
+  .app-header {
+    background-color: hsl(var(--background));
+    border-color: hsl(var(--border));
+  }
+  
+  .app-sidebar {
+    background-color: hsl(var(--background));
+    border-color: hsl(var(--border));
+  }
+  
+  .app-main {
+    background-color: hsl(var(--muted) / 0.4);
   }
 }
