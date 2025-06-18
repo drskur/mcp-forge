@@ -88,4 +88,14 @@
   .app-main {
     background-color: hsl(var(--muted) / 0.4);
   }
+
+  .nav-link {
+    color: hsl(var(--foreground));
+    text-decoration: none;
+  }
+  
+  .nav-link:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
 }
