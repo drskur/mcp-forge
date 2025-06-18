@@ -18,7 +18,7 @@ export const MainLayout: Component<MainLayoutProps> = (props) => {
         <Sidebar />
 
         {/* Main Content */}
-        <main class="app-main flex-1 overflow-auto p-6">
+        <main class="flex-1 overflow-auto p-6 bg-muted/40">
           {props.children}
         </main>
       </div>
