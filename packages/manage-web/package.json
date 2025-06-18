@@ -4,7 +4,11 @@
   "scripts": {
     "dev": "vinxi dev",
     "build": "vinxi build",
-    "start": "vinxi start"
+    "start": "vinxi start",
+    "lint": "oxlint src",
+    "lint:fix": "oxlint src --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
     "@kobalte/core": "^0.13.10",
@@ -24,7 +28,9 @@
     "@tailwindcss/postcss": "^4.1.10",
     "@types/node": "^24.0.3",
     "autoprefixer": "^10.4.21",
+    "oxlint": "^1.1.0",
     "postcss": "^8.5.6",
+    "prettier": "^3.5.3",
     "tailwindcss": "^4.1.10"
   }
 }

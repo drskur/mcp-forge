@@ -7,9 +7,7 @@ export default function App() {
   return (
     <Router
       root={(props: any) => (
-        <Suspense fallback={<div>Loading...</div>}>
-          {props.children}
-        </Suspense>
+        <Suspense fallback={<div>Loading...</div>}>{props.children}</Suspense>
       )}
     >
       <FileRoutes />
