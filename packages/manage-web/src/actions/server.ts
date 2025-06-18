@@ -11,7 +11,7 @@ import {
   generateShortAlias,
   getCurrentTimestamp,
 } from "@/db/helper";
-import { putItem } from "@/db/dynamodb";
+import { deleteItem, putItem } from "@/db/dynamodb";
 
 export const createServer = action(async (formData: ServerFormData) => {
   const id = generateId();
@@ -34,37 +34,20 @@ export const createServer = action(async (formData: ServerFormData) => {
   return redirect("/servers");
 });
 
+export const updateServer = action(
+  async (item: McpServerDdbItem, formData: ServerFormData) => {
+    item.name = formData.name;
+    item.description = formData.description;
+    item.updatedAt = getCurrentTimestamp();
 
-// export const updateServer = action(async (formData: FormData) => {
-//   const id = formData.get("id") as string;
-//   const name = formData.get("name") as string;
-//   const host = formData.get("host") as string;
-//   const port = formData.get("port") as string;
-//   const description = formData.get("description") as string;
-//
-//   console.log("서버 업데이트 요청 데이터:", {
-//     id,
-//     name,
-//     host,
-//     port: port ? parseInt(port) : undefined,
-//     description,
-//     timestamp: new Date().toISOString(),
-//   });
-//
-//   // TODO: DynamoDB에서 업데이트 로직 구현
-//
-//   return redirect("/servers");
-// });
+    await putItem(item);
 
-// export const deleteServer = action(async (formData: FormData) => {
-//   const id = formData.get("id") as string;
-//
-//   console.log("서버 삭제 요청 데이터:", {
-//     id,
-//     timestamp: new Date().toISOString(),
-//   });
-//
-//   // TODO: DynamoDB에서 삭제 로직 구현
-//
-//   return redirect("/servers");
-// });
+    return redirect("/servers");
+  }
+);
+
+export const deleteServer = action(async (item: McpServerDdbItem) => {
+  await deleteItem(item.PK, item.SK);
+
+  return redirect("/servers");
+});

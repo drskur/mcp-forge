@@ -1,4 +1,4 @@
-import { Component, Setter, createSignal } from "solid-js";
+import { Component, Setter, createSignal, createEffect } from "solid-js";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -13,15 +13,25 @@ import { ServerFormData } from "@/types/server";
 interface ServerFormSheetProps {
   open: boolean;
   setOpen: Setter<boolean>;
-  onSubmit: (data: ServerFormData) => void;
+  onCreate?: (data: ServerFormData) => void;
+  onEdit?: (data: ServerFormData) => void;
   initialData?: ServerFormData;
 }
 
 export const ServerFormSheet: Component<ServerFormSheetProps> = props => {
-  const [name, setName] = createSignal(props.initialData?.name ?? "");
-  const [description, setDescription] = createSignal(
-    props.initialData?.description ?? ""
-  );
+  const [name, setName] = createSignal("");
+  const [description, setDescription] = createSignal("");
+
+  // initialData가 변경될 때마다 폼 필드 업데이트
+  createEffect(() => {
+    if (props.initialData) {
+      setName(props.initialData.name || "");
+      setDescription(props.initialData.description || "");
+    } else {
+      setName("");
+      setDescription("");
+    }
+  });
 
   const resetForm = () => {
     setName("");
@@ -29,10 +39,17 @@ export const ServerFormSheet: Component<ServerFormSheetProps> = props => {
   };
 
   const handleSubmit = () => {
-    props.onSubmit({
+    const formData = {
       name: name(),
       description: description(),
-    });
+    };
+
+    if (props.initialData && props.onEdit) {
+      props.onEdit(formData);
+    } else if (props.onCreate) {
+      props.onCreate(formData);
+    }
+
     props.setOpen(false);
   };
 
@@ -48,7 +65,9 @@ export const ServerFormSheet: Component<ServerFormSheetProps> = props => {
     <Sheet open={props.open} onOpenChange={handleOpenChange}>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Add New Server</SheetTitle>
+          <SheetTitle>
+            {props.initialData ? "Edit Server" : "Add New Server"}
+          </SheetTitle>
           <SheetDescription>
             Configure a new MCP server by providing its details.
           </SheetDescription>
@@ -82,7 +101,9 @@ export const ServerFormSheet: Component<ServerFormSheetProps> = props => {
           </div>
         </div>
         <SheetFooter>
-          <Button onClick={handleSubmit}>Add Server</Button>
+          <Button onClick={handleSubmit}>
+            {props.initialData ? "Edit Server" : "Add Server"}
+          </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

@@ -5,6 +5,7 @@ import {
   DynamoDBDocumentClient,
   PutCommand,
   QueryCommand,
+  DeleteCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { McpServerDdbItem } from "@/types/server";
 import { ENTITY_TYPES } from "./helper";
@@ -78,3 +79,32 @@ export const queryItemsByCreatedAt = async <T extends McpServerDdbItem>(
     throw error;
   }
 };
+
+export const deleteItem = async (PK: string, SK: string): Promise<void> => {
+  const tableName = TABLE_NAME;
+
+  if (!tableName) {
+    throw new Error("TABLE_NAME environment variable is not set");
+  }
+
+  try {
+    await docClient.send(
+      new DeleteCommand({
+        TableName: tableName,
+        Key: {
+          PK,
+          SK,
+        },
+      })
+    );
+
+    console.log("Successfully deleted item from DynamoDB:", {
+      PK,
+      SK,
+    });
+  } catch (error) {
+    console.error("Failed to delete item from DynamoDB:", error);
+    throw error;
+  }
+};
+

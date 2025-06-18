@@ -1,19 +1,27 @@
-import { Component, createSignal, For, Show } from "solid-js";
+import {
+  Component,
+  createSignal,
+  For,
+  Show,
+  createEffect,
+  createMemo,
+} from "solid-js";
 import { MainLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { ServerFormDialog } from "@/components/dialog/ServerFormDialog";
 import { ServerFormSheet } from "@/components/sheet/ServerFormSheet";
 import { createAsync, query, useAction } from "@solidjs/router";
-import { createServer } from "@/actions/server";
+import { createServer, deleteServer, updateServer } from "@/actions/server";
 import { queryItemsByCreatedAt } from "@/db/dynamodb";
 import { ENTITY_TYPES } from "@/db/helper";
 import { McpServerDdbItem } from "@/types/server";
-import { Search, MoreVertical } from "lucide-solid";
+import { Search } from "lucide-solid";
 import {
   RadioGroup,
   RadioGroupItem,
   RadioGroupItemControl,
 } from "@/components/ui/radio-group";
+import { ServerActionsMenu } from "@/components/server/ServerActionsMenu";
+import { ConfirmDialog } from "@/components/dialog/ConfirmDialog";
 
 const getServers = query(async () => {
   "use server";
@@ -21,12 +29,31 @@ const getServers = query(async () => {
 }, "servers");
 
 const Servers: Component = () => {
-  const [open, setOpen] = createSignal(false);
+  const [sheetOpen, setSheetOpen] = createSignal(false);
   const [searchQuery, setSearchQuery] = createSignal("");
-  const [selectedServer, setSelectedServer] = createSignal<string | null>(null);
+  const [selectedServer, setSelectedServer] = createSignal<string | undefined>(
+    undefined
+  );
+  const [isRadioGroupReady, setIsRadioGroupReady] = createSignal(false);
+  const [editingServer, setEditingServer] = createSignal<
+    McpServerDdbItem | undefined
+  >(undefined);
+  const [confirmDialogOpen, setConfirmDialogOpen] = createSignal(false);
+  const [deletingServer, setDeletingServer] = createSignal<
+    McpServerDdbItem | undefined
+  >(undefined);
 
   const servers = createAsync(() => getServers());
   const createServerAction = useAction(createServer);
+  const updateServerAction = useAction(updateServer);
+  const deleteServerAction = useAction(deleteServer);
+
+  // RadioGroup 초기화를 위한 effect
+  createEffect(() => {
+    if (servers()) {
+      setIsRadioGroupReady(true);
+    }
+  });
 
   const filteredServers = () => {
     const query = searchQuery().toLowerCase();
@@ -48,6 +75,39 @@ const Servers: Component = () => {
     });
   };
 
+  const handleEdit = (server: McpServerDdbItem) => {
+    setEditingServer(server);
+    setSheetOpen(true);
+  };
+
+  const handleSheetClose = () => {
+    setSheetOpen(false);
+    setEditingServer(undefined);
+  };
+
+  const handleDelete = (server: McpServerDdbItem) => {
+    setDeletingServer(server);
+    setConfirmDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    const server = deletingServer();
+    if (server) {
+      await deleteServerAction(server);
+      setDeletingServer(undefined);
+    }
+  };
+
+  // initialData를 createMemo로 계산하여 reactive computation 경고 해결
+  const initialData = createMemo(() =>
+    editingServer()
+      ? {
+          name: editingServer()?.name ?? "",
+          description: editingServer()?.description ?? "",
+        }
+      : undefined
+  );
+
   return (
     <MainLayout>
       <div class="space-y-6">
@@ -60,7 +120,14 @@ const Servers: Component = () => {
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <Button onClick={() => setOpen(true)}>Create Server</Button>
+            <Button
+              onClick={() => {
+                setEditingServer(undefined);
+                setSheetOpen(true);
+              }}
+            >
+              Create Server
+            </Button>
           </div>
         </div>
 
@@ -77,111 +144,131 @@ const Servers: Component = () => {
         </div>
 
         {/* Table */}
-        <RadioGroup
-          value={selectedServer() || ""}
-          onChange={value => setSelectedServer(value || null)}
+        <Show
+          when={servers() && isRadioGroupReady()}
+          fallback={
+            <div class="rounded-lg border bg-card">
+              <div class="p-6 text-center text-muted-foreground">
+                <div class="animate-pulse">Loading servers...</div>
+              </div>
+            </div>
+          }
         >
-          <div class="rounded-lg border bg-card">
-            <div class="overflow-x-auto">
-              <table class="w-full">
-                <thead>
-                  <tr class="border-b bg-muted/50">
-                    <th class="h-12 px-4 text-left align-middle"></th>
-                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      <button class="flex items-center gap-1 hover:text-foreground">
-                        Name
-                      </button>
-                    </th>
-                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      <button class="flex items-center gap-1 hover:text-foreground">
-                        Description
-                      </button>
-                    </th>
-                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      <button class="flex items-center gap-1 hover:text-foreground">
-                        ID
-                      </button>
-                    </th>
+          <RadioGroup value={selectedServer()} onChange={setSelectedServer}>
+            <div class="rounded-lg border bg-card">
+              <div class="overflow-x-auto">
+                <table class="w-full">
+                  <thead>
+                    <tr class="border-b bg-muted/50">
+                      <th class="h-12 px-4 text-left align-middle"></th>
+                      <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        <button class="flex items-center gap-1 hover:text-foreground">
+                          Name
+                        </button>
+                      </th>
+                      <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        <button class="flex items-center gap-1 hover:text-foreground">
+                          Description
+                        </button>
+                      </th>
+                      <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        <button class="flex items-center gap-1 hover:text-foreground">
+                          ID
+                        </button>
+                      </th>
 
-                    <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
-                      <button class="flex items-center gap-1 hover:text-foreground">
-                        Created
-                      </button>
-                    </th>
-                    <th class="h-12 px-4 text-left align-middle w-12"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <Show
-                    when={filteredServers().length > 0}
-                    fallback={
-                      <tr>
-                        <td
-                          colspan="7"
-                          class="h-24 text-center text-muted-foreground"
-                        >
-                          No servers configured yet.
-                        </td>
-                      </tr>
-                    }
-                  >
-                    <For each={filteredServers()}>
-                      {server => (
-                        <tr class="border-b hover:bg-muted/50 transition-colors">
-                          <td class="px-4 py-3">
-                            <RadioGroupItem value={server.id} class="flex">
-                              <RadioGroupItemControl />
-                            </RadioGroupItem>
-                          </td>
-                          <td class="px-4 py-3">
-                            <a
-                              href="#"
-                              class="text-primary hover:underline font-medium"
-                            >
-                              {server.name}
-                            </a>
-                          </td>
-                          <td class="px-4 py-3 text-sm text-muted-foreground">
-                            {server.description || "-"}
-                          </td>
-                          <td class="px-4 py-3">
-                            <code class="text-xs bg-muted px-2 py-1 rounded font-mono">
-                              {server.alias}
-                            </code>
-                          </td>
-                          <td class="px-4 py-3 text-sm text-muted-foreground">
-                            {formatDate(server.createdAt)}
-                          </td>
-                          <td class="px-4 py-3">
-                            <button
-                              class="p-1 hover:bg-muted rounded-md transition-colors"
-                              onClick={() => alert("Menu not implemented")}
-                            >
-                              <MoreVertical class="h-4 w-4" />
-                            </button>
+                      <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                        <button class="flex items-center gap-1 hover:text-foreground">
+                          Created
+                        </button>
+                      </th>
+                      <th class="h-12 px-4 text-left align-middle w-12"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <Show
+                      when={filteredServers().length > 0}
+                      fallback={
+                        <tr>
+                          <td
+                            colspan="7"
+                            class="h-24 text-center text-muted-foreground"
+                          >
+                            No servers configured yet.
                           </td>
                         </tr>
-                      )}
-                    </For>
-                  </Show>
-                </tbody>
-              </table>
+                      }
+                    >
+                      <For each={filteredServers()}>
+                        {server => (
+                          <tr class="border-b hover:bg-muted/50 transition-colors">
+                            <td class="px-4 py-3">
+                              <RadioGroupItem value={server.id} class="flex">
+                                <RadioGroupItemControl />
+                              </RadioGroupItem>
+                            </td>
+                            <td class="px-4 py-3">
+                              <a
+                                href="#"
+                                class="text-primary hover:underline font-medium"
+                              >
+                                {server.name}
+                              </a>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-muted-foreground">
+                              {server.description || "-"}
+                            </td>
+                            <td class="px-4 py-3">
+                              <code class="text-xs bg-muted px-2 py-1 rounded font-mono">
+                                {server.alias}
+                              </code>
+                            </td>
+                            <td class="px-4 py-3 text-sm text-muted-foreground">
+                              {formatDate(server.createdAt)}
+                            </td>
+                            <td class="px-4 py-3">
+                              <ServerActionsMenu
+                                server={server}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                              />
+                            </td>
+                          </tr>
+                        )}
+                      </For>
+                    </Show>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </RadioGroup>
+          </RadioGroup>
+        </Show>
 
-        {/* Dialog 버전 */}
-        {/* <ServerFormDialog
-          open={open()}
-          setOpen={setOpen}
-          onSubmit={async data => await createServerAction(data)}
-        /> */}
-        
         {/* Sheet 버전 */}
         <ServerFormSheet
-          open={open()}
-          setOpen={setOpen}
-          onSubmit={async data => await createServerAction(data)}
+          open={sheetOpen()}
+          setOpen={handleSheetClose}
+          onCreate={async data => await createServerAction(data)}
+          onEdit={async data => {
+            const item = editingServer();
+            if (item) {
+              await updateServerAction(item, data);
+              setEditingServer(undefined);
+            }
+          }}
+          initialData={initialData()}
+        />
+
+        {/* Delete Confirmation Dialog */}
+        <ConfirmDialog
+          open={confirmDialogOpen()}
+          setOpen={setConfirmDialogOpen}
+          title="Delete Server"
+          description={`Are you sure you want to delete "${deletingServer()?.name}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+          onConfirm={confirmDelete}
+          variant="destructive"
         />
       </div>
     </MainLayout>
