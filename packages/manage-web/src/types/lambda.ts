@@ -1,6 +1,5 @@
-export interface LambdaFunction {
-  functionName: string;
-  functionArn: string;
-  runtime: string;
-  description?: string;
+export interface InvocationItem {
+  invocationType: "lambda" | "stepfunction";
+  name: string;
+  arn: string;
 }

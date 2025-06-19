@@ -1,5 +1,8 @@
-import { LambdaClient, ListFunctionsCommand } from "@aws-sdk/client-lambda";
-import { LambdaFunction } from "@/types/lambda";
+import {
+  FunctionConfiguration,
+  LambdaClient,
+  ListFunctionsCommand,
+} from "@aws-sdk/client-lambda";
 
 const region = process.env.AWS_REGION || "us-east-1";
 
@@ -11,7 +14,7 @@ export const listLambdaFunctions = async (
   marker?: string,
   maxItems?: number
 ): Promise<{
-  functions: LambdaFunction[];
+  functions: FunctionConfiguration[];
   nextMarker?: string;
 }> => {
   try {
@@ -22,16 +25,8 @@ export const listLambdaFunctions = async (
 
     const response = await lambdaClient.send(command);
 
-    const functions: LambdaFunction[] =
-      response.Functions?.map(f => ({
-        functionName: f.FunctionName ?? "",
-        functionArn: f.FunctionArn ?? "",
-        runtime: f.Runtime?.toString() ?? "",
-        description: f.Description,
-      })) ?? [];
-
     return {
-      functions,
+      functions: response.Functions ?? [],
       nextMarker: response.NextMarker,
     };
   } catch (error) {
