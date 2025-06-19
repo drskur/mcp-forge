@@ -9,7 +9,6 @@ export interface McpServer {
   id: string;
   name: string;
   description: string;
-  alias: string;
   createdAt: string;
   updatedAt: string;
 }

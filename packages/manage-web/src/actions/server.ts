@@ -7,14 +7,13 @@ import {
   createServerPK,
   createServerSK,
   ENTITY_TYPES,
-  generateId,
-  generateShortAlias,
+  generateShortId,
   getCurrentTimestamp,
 } from "@/db/helper";
 import { deleteItem, putItem } from "@/db/dynamodb";
 
 export const createServer = action(async (formData: ServerFormData) => {
-  const id = generateId();
+  const id = generateShortId();
   const timestamp = getCurrentTimestamp();
   const item: McpServerDdbItem = {
     PK: createServerPK(id),
@@ -24,7 +23,6 @@ export const createServer = action(async (formData: ServerFormData) => {
     id,
     name: formData.name,
     description: formData.description,
-    alias: generateShortAlias(),
     createdAt: timestamp,
     updatedAt: timestamp,
   };

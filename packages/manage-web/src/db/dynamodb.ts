@@ -6,6 +6,7 @@ import {
   PutCommand,
   QueryCommand,
   DeleteCommand,
+  GetCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { McpServerDdbItem } from "@/types/server";
 import { ENTITY_TYPES } from "./helper";
@@ -104,6 +105,30 @@ export const deleteItem = async (PK: string, SK: string): Promise<void> => {
     });
   } catch (error) {
     console.error("Failed to delete item from DynamoDB:", error);
+    throw error;
+  }
+};
+
+export const getItemByKey = async <T extends McpServerDdbItem>(
+  key: { PK: string; SK: string }
+): Promise<T | null> => {
+  const tableName = TABLE_NAME;
+
+  if (!tableName) {
+    throw new Error("TABLE_NAME environment variable is not set");
+  }
+
+  try {
+    const response = await docClient.send(
+      new GetCommand({
+        TableName: tableName,
+        Key: key,
+      })
+    );
+
+    return (response.Item as T) || null;
+  } catch (error) {
+    console.error("Failed to get item from DynamoDB:", error);
     throw error;
   }
 };

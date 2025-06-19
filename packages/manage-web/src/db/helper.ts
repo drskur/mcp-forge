@@ -12,7 +12,7 @@ export const createCreatedAtId = (createdAt: string, id: string): string =>
 // 범용 헬퍼 함수들
 export const generateId = (): string => crypto.randomUUID();
 export const getCurrentTimestamp = (): string => new Date().toISOString();
-export const generateShortAlias = (): string => {
+export const generateShortId = (): string => {
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   return Array.from({ length: 10 }, () =>
