@@ -1,4 +1,4 @@
-import { Component, createSignal, Show, createMemo } from "solid-js";
+import { Component, createSignal, createMemo } from "solid-js";
 import { useParams, query, createAsync } from "@solidjs/router";
 import { MainLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,15 @@ const NewTool: Component = () => {
     return [];
   });
 
+  // 폼 유효성 검사
+  const isFormValid = createMemo(() => {
+    const toolName = name().trim();
+    const toolDescription = description().trim();
+    const hasInvocation = selectedInvocation();
+
+    return toolName !== "" && toolDescription !== "" && hasInvocation !== null;
+  });
+
   return (
     <MainLayout>
       <div class="space-y-6">
@@ -102,23 +111,15 @@ const NewTool: Component = () => {
             invocations={invocations}
           />
 
-          {/* Parameter Editor */}
+          {/* Parameters Editor */}
           <ParameterEditor
             parameters={parameters()}
             setParameters={setParameters}
           />
 
-          {/* Continue Button */}
-          <Show
-            when={
-              selectedType() &&
-              (selectedType() !== "lambda" || selectedInvocation())
-            }
-          >
-            <div class="flex justify-end">
-              <Button>Create Tool</Button>
-            </div>
-          </Show>
+          <div class="flex justify-end">
+            <Button disabled={!isFormValid()}>Create Tool</Button>
+          </div>
         </div>
       </div>
     </MainLayout>

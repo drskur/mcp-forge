@@ -1,59 +1,58 @@
 import { Component, For, createSignal, Show, Setter } from "solid-js";
 import { Button } from "@/components/ui/button";
-import {
-  TextFieldRoot,
-  TextFieldLabel,
-  TextField,
-} from "@/components/ui/textfield";
-import { TextArea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-solid";
-import { ToolParameter, ParameterType } from "@/types/tool";
+import { Plus, Trash2, Edit } from "lucide-solid";
+import { ToolParameter } from "@/types/tool";
+import { SingleParameterSheet } from "./SingleParameterSheet";
 
 interface ParameterEditorProps {
   parameters: ToolParameter[];
   setParameters: Setter<ToolParameter[]>;
 }
 
-const parameterTypes: { value: ParameterType; label: string }[] = [
-  { value: "string", label: "String" },
-  { value: "number", label: "Number" },
-  { value: "bool", label: "Boolean" },
-  { value: "enum", label: "Enum" },
-  { value: "array", label: "Array" },
-];
+export const ParameterEditor: Component<ParameterEditorProps> = props => {
+  const [sheetOpen, setSheetOpen] = createSignal(false);
+  const [editingParameter, setEditingParameter] =
+    createSignal<ToolParameter | null>(null);
+  const [editingIndex, setEditingIndex] = createSignal<number | null>(null);
 
-export const ParameterEditor: Component<ParameterEditorProps> = (props) => {
-  const addParameter = () => {
-    const newParameter: ToolParameter = {
-      name: "",
-      type: "string",
-      description: "",
-      required: false,
-    };
-    props.setParameters([...props.parameters, newParameter]);
+  const handleAddParameter = () => {
+    setEditingParameter(null);
+    setEditingIndex(null);
+    setSheetOpen(true);
   };
 
-  const removeParameter = (index: number) => {
+  const handleEditParameter = (param: ToolParameter, index: number) => {
+    setEditingParameter(param);
+    setEditingIndex(index);
+    setSheetOpen(true);
+  };
+
+  const handleRemoveParameter = (index: number) => {
     const newParameters = props.parameters.filter((_, i) => i !== index);
     props.setParameters(newParameters);
   };
 
-  const updateParameter = (index: number, field: keyof ToolParameter, value: any) => {
-    const newParameters = [...props.parameters];
-    newParameters[index] = { ...newParameters[index], [field]: value };
-    props.setParameters(newParameters);
+  const handleSaveParameter = (parameter: ToolParameter) => {
+    const index = editingIndex();
+    if (index !== null) {
+      // 편집
+      const newParameters = [...props.parameters];
+      newParameters[index] = parameter;
+      props.setParameters(newParameters);
+    } else {
+      // 새 파라미터 추가
+      props.setParameters([...props.parameters, parameter]);
+    }
   };
 
-  const updateEnumValues = (index: number, enumString: string) => {
-    const enumValues = enumString.split(",").map(v => v.trim()).filter(v => v);
-    updateParameter(index, "enumValues", enumValues);
+  const getTypeDisplay = (param: ToolParameter) => {
+    if (param.type === "enum" && param.enumValues) {
+      return `enum(${param.enumValues.length})`;
+    }
+    if (param.type === "array" && param.arrayItemType) {
+      return `${param.arrayItemType}[]`;
+    }
+    return param.type;
   };
 
   return (
@@ -66,7 +65,7 @@ export const ParameterEditor: Component<ParameterEditorProps> = (props) => {
               Define the parameters that this tool accepts.
             </p>
           </div>
-          <Button onClick={addParameter} size="sm">
+          <Button onClick={handleAddParameter} size="sm">
             <Plus class="h-4 w-4 mr-2" />
             Add Parameter
           </Button>
@@ -80,131 +79,90 @@ export const ParameterEditor: Component<ParameterEditorProps> = (props) => {
             </div>
           }
         >
-          <div class="space-y-4">
-            <For each={props.parameters}>
-              {(param, index) => (
-                <div class="border rounded-lg p-4 space-y-4">
-                  <div class="flex items-center justify-between">
-                    <div class="text-sm font-medium">Parameter #{index() + 1}</div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeParameter(index())}
-                      class="text-destructive hover:text-destructive"
-                    >
-                      <Trash2 class="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <TextFieldRoot>
-                      <TextFieldLabel>Name</TextFieldLabel>
-                      <TextField
-                        value={param.name}
-                        onInput={(e) => updateParameter(index(), "name", e.currentTarget.value)}
-                        placeholder="Parameter name"
-                      />
-                    </TextFieldRoot>
-
-                    <div class="space-y-2">
-                      <label class="text-sm font-medium">Type</label>
-                      <Select
-                        value={param.type}
-                        onChange={(value) => updateParameter(index(), "type", value as ParameterType)}
-                        options={parameterTypes.map(t => t.value)}
-                        placeholder="Select type"
-                        itemComponent={(itemProps) => {
-                          const type = parameterTypes.find(t => t.value === itemProps.item.rawValue);
-                          return (
-                            <SelectItem item={itemProps.item}>
-                              {type?.label || itemProps.item.rawValue}
-                            </SelectItem>
-                          );
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue>
-                            {(state) => {
-                              const selectedType = parameterTypes.find(t => t.value === state.selectedOption());
-                              return selectedType?.label || "Select type";
-                            }}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent />
-                      </Select>
-                    </div>
-                  </div>
-
-                  <TextFieldRoot>
-                    <TextFieldLabel>Description</TextFieldLabel>
-                    <TextArea
-                      value={param.description}
-                      onInput={(e) => updateParameter(index(), "description", e.currentTarget.value)}
-                      placeholder="Describe what this parameter does"
-                      rows={2}
-                    />
-                  </TextFieldRoot>
-
-                  <div class="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      id={`required-${index()}`}
-                      checked={param.required}
-                      onChange={(e) => updateParameter(index(), "required", e.currentTarget.checked)}
-                      class="rounded border-gray-300"
-                    />
-                    <label for={`required-${index()}`} class="text-sm font-medium">
-                      Required parameter
-                    </label>
-                  </div>
-
-                  {/* Enum Values */}
-                  <Show when={param.type === "enum"}>
-                    <TextFieldRoot>
-                      <TextFieldLabel>Enum Values (comma-separated)</TextFieldLabel>
-                      <TextField
-                        value={param.enumValues?.join(", ") || ""}
-                        onInput={(e) => updateEnumValues(index(), e.currentTarget.value)}
-                        placeholder="value1, value2, value3"
-                      />
-                    </TextFieldRoot>
-                  </Show>
-
-                  {/* Array Item Type */}
-                  <Show when={param.type === "array"}>
-                    <div class="space-y-2">
-                      <label class="text-sm font-medium">Array Item Type</label>
-                      <Select
-                        value={param.arrayItemType || "string"}
-                        onChange={(value) => updateParameter(index(), "arrayItemType", value as ParameterType)}
-                        options={parameterTypes.filter(t => t.value !== "array").map(t => t.value)}
-                        placeholder="Select array item type"
-                        itemComponent={(itemProps) => {
-                          const type = parameterTypes.find(t => t.value === itemProps.item.rawValue);
-                          return (
-                            <SelectItem item={itemProps.item}>
-                              {type?.label || itemProps.item.rawValue}
-                            </SelectItem>
-                          );
-                        }}
-                      >
-                        <SelectTrigger>
-                          <SelectValue>
-                            {(state) => {
-                              const selectedType = parameterTypes.find(t => t.value === state.selectedOption());
-                              return selectedType?.label || "Select type";
-                            }}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent />
-                      </Select>
-                    </div>
-                  </Show>
-                </div>
-              )}
-            </For>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b bg-muted/50">
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Name
+                  </th>
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Type
+                  </th>
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Required
+                  </th>
+                  <th class="h-12 px-4 text-left align-middle font-medium text-muted-foreground">
+                    Description
+                  </th>
+                  <th class="h-12 px-4 text-right align-middle font-medium text-muted-foreground"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <For each={props.parameters}>
+                  {(param, index) => (
+                    <tr class="border-b hover:bg-muted/50 transition-colors">
+                      <td class="px-4 py-3">
+                        <div class="font-medium">
+                          {param.name || `Parameter ${index() + 1}`}
+                        </div>
+                      </td>
+                      <td class="px-4 py-3">
+                        <span class="inline-flex items-center px-2 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
+                          {getTypeDisplay(param)}
+                        </span>
+                      </td>
+                      <td class="px-4 py-3">
+                        {param.required ? (
+                          <span class="inline-flex items-center px-2 py-1 rounded-md bg-destructive/10 text-destructive text-xs font-medium">
+                            required
+                          </span>
+                        ) : (
+                          <span class="text-muted-foreground text-sm">
+                            optional
+                          </span>
+                        )}
+                      </td>
+                      <td class="px-4 py-3">
+                        <div class="text-sm text-muted-foreground max-w-xs truncate">
+                          {param.description || "-"}
+                        </div>
+                      </td>
+                      <td class="px-4 py-3">
+                        <div class="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditParameter(param, index())}
+                          >
+                            <Edit class="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveParameter(index())}
+                            class="text-destructive hover:text-destructive"
+                          >
+                            <Trash2 class="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </For>
+              </tbody>
+            </table>
           </div>
         </Show>
+
+        {/* Single Parameter Sheet */}
+        <SingleParameterSheet
+          open={sheetOpen()}
+          setOpen={setSheetOpen}
+          parameter={editingParameter()}
+          onSave={handleSaveParameter}
+          isEdit={editingIndex() !== null}
+        />
       </div>
     </div>
   );

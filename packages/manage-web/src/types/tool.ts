@@ -1,6 +1,7 @@
 import { DynamoDbItem } from "@/types/dynamodb";
 
 export type ParameterType = "string" | "number" | "bool" | "enum" | "array";
+export type ArrayItemType = "string" | "number" | "bool";
 
 export interface ToolParameter {
   name: string;
@@ -10,7 +11,7 @@ export interface ToolParameter {
   // For enum type
   enumValues?: string[];
   // For array type
-  arrayItemType?: ParameterType;
+  arrayItemType?: ArrayItemType;
 }
 
 export interface ToolFormData {
