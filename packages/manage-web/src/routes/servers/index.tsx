@@ -8,6 +8,7 @@ import {
 import { MainLayout } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/ui/search-bar";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { ServerFormSheet } from "@/components/sheet/ServerFormSheet";
 import { createAsync, query, useAction } from "@solidjs/router";
 import { createServer, deleteServer, updateServer } from "@/actions/server";
@@ -97,10 +98,17 @@ const Index: Component = () => {
   return (
     <MainLayout>
       <div class="space-y-6">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: "Servers" }
+          ]}
+        />
+
         {/* Header */}
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
-            <h1 class="text-2xl font-bold">Index</h1>
+            <h1 class="text-2xl font-bold">Servers</h1>
             <span class="text-muted-foreground">
               ({filteredServers().length}/{servers()?.length || 0})
             </span>

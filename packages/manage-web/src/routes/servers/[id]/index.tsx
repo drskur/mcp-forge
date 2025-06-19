@@ -1,4 +1,4 @@
-import { Component, Show, createSignal } from "solid-js";
+import { Component, Show, createSignal, createEffect } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import { createAsync, query, useAction } from "@solidjs/router";
 import { MainLayout } from "@/components/layout";
@@ -7,12 +7,14 @@ import { createServerPK, createServerSK } from "@/db/helper";
 import { McpServerDdbItem } from "@/types/server";
 import { McpToolDdbItem } from "@/types/tool";
 import { Button } from "@/components/ui/button";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { ChevronLeft } from "lucide-solid";
 import { ServerDetailCard } from "@/components/server/ServerDetailCard";
 import { ToolTable } from "@/components/tool/ToolTable";
 import { ServerFormSheet } from "@/components/sheet/ServerFormSheet";
 import { ConfirmDialog } from "@/components/dialog/ConfirmDialog";
 import { updateServer, deleteServer } from "@/actions/server";
+import { cacheServerName } from "@/lib/breadcrumb";
 
 const getServer = query(async (id: string) => {
   "use server";
@@ -58,9 +60,25 @@ const ServerDetail: Component = () => {
     console.log("Delete tool:", tool);
   };
 
+  // 서버 정보가 로드되면 localStorage에 저장
+  createEffect(() => {
+    const currentServer = server();
+    if (currentServer) {
+      cacheServerName(params.id, currentServer.name);
+    }
+  });
+
   return (
     <MainLayout>
       <div class="space-y-6">
+        {/* Breadcrumb */}
+        <Breadcrumb
+          items={[
+            { label: "Servers", href: "/servers" },
+            { label: server()?.name || "Loading..." }
+          ]}
+        />
+
         {/* Header */}
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-4">
@@ -109,7 +127,9 @@ const ServerDetail: Component = () => {
           <div class="space-y-4">
             <div class="flex items-center justify-between">
               <h2 class="text-xl font-semibold">Tools</h2>
-              <Button>Add Tool</Button>
+              <Button as="a" href={`/servers/${params.id}/tools/new`}>
+                Add Tool
+              </Button>
             </div>
 
             <Show
