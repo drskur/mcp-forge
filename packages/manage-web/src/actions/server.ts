@@ -1,6 +1,6 @@
 "use server";
 
-import { action, redirect } from "@solidjs/router";
+import { action, revalidate, redirect } from "@solidjs/router";
 import { McpServerDdbItem, ServerFormData } from "@/types/server";
 import {
   createCreatedAtId,
@@ -40,7 +40,7 @@ export const updateServer = action(
 
     await putItem(item);
 
-    return redirect("/servers");
+    return revalidate(["servers", "server"]);
   }
 );
 
