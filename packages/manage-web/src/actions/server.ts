@@ -9,8 +9,8 @@ import {
   ENTITY_TYPES,
   generateShortId,
   getCurrentTimestamp,
-} from "@/db/helper";
-import { deleteItem, putItem } from "@/db/dynamodb";
+} from "@/aws/dynamodb/helper";
+import { deleteItem, putItem } from "@/aws/dynamodb/query";
 
 export const createServer = action(async (formData: ServerFormData) => {
   const id = generateShortId();

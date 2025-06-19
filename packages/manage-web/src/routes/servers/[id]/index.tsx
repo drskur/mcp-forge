@@ -2,8 +2,8 @@ import { Component, Show, createSignal, createEffect } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import { createAsync, query, useAction } from "@solidjs/router";
 import { MainLayout } from "@/components/layout";
-import { getItemByKey, queryToolsByServerId } from "@/db/dynamodb";
-import { createServerPK, createServerSK } from "@/db/helper";
+import { getItemByKey, queryToolsByServerId } from "@/aws/dynamodb/query";
+import { createServerPK, createServerSK } from "@/aws/dynamodb/helper";
 import { McpServerDdbItem } from "@/types/server";
 import { McpToolDdbItem } from "@/types/tool";
 import { Button } from "@/components/ui/button";
@@ -75,7 +75,7 @@ const ServerDetail: Component = () => {
         <Breadcrumb
           items={[
             { label: "Servers", href: "/servers" },
-            { label: server()?.name || "Loading..." }
+            { label: server()?.name || "Loading..." },
           ]}
         />
 

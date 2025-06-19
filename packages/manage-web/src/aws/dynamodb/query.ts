@@ -51,7 +51,7 @@ export const putItem = async (item: DynamoDbItem): Promise<void> => {
   }
 };
 
-export const queryItemsByCreatedAt = async <T extends McpServerDdbItem>(
+export const queryItemsByCreatedAt = async <T extends DynamoDbItem>(
   entityType: keyof typeof ENTITY_TYPES,
   limit?: number,
   indexForward?: boolean
@@ -111,9 +111,10 @@ export const deleteItem = async (PK: string, SK: string): Promise<void> => {
   }
 };
 
-export const getItemByKey = async <T extends DynamoDbItem>(
-  key: { PK: string; SK: string }
-): Promise<T | null> => {
+export const getItemByKey = async <T extends DynamoDbItem>(key: {
+  PK: string;
+  SK: string;
+}): Promise<T | null> => {
   const tableName = TABLE_NAME;
 
   if (!tableName) {
@@ -136,7 +137,9 @@ export const getItemByKey = async <T extends DynamoDbItem>(
 };
 
 // 특정 서버의 모든 툴 조회
-export const queryToolsByServerId = async (serverId: string): Promise<McpToolDdbItem[]> => {
+export const queryToolsByServerId = async (
+  serverId: string
+): Promise<McpToolDdbItem[]> => {
   const tableName = TABLE_NAME;
 
   if (!tableName) {
@@ -161,4 +164,3 @@ export const queryToolsByServerId = async (serverId: string): Promise<McpToolDdb
     throw error;
   }
 };
-

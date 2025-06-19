@@ -12,8 +12,8 @@ import { Breadcrumb } from "@/components/ui/breadcrumb";
 import { ServerFormSheet } from "@/components/sheet/ServerFormSheet";
 import { createAsync, query, useAction } from "@solidjs/router";
 import { createServer, deleteServer, updateServer } from "@/actions/server";
-import { queryItemsByCreatedAt } from "@/db/dynamodb";
-import { ENTITY_TYPES } from "@/db/helper";
+import { queryItemsByCreatedAt } from "@/aws/dynamodb/query";
+import { ENTITY_TYPES } from "@/aws/dynamodb/helper";
 import { McpServerDdbItem } from "@/types/server";
 import { ServerTable } from "@/components/server/ServerTable";
 import { ConfirmDialog } from "@/components/dialog/ConfirmDialog";
@@ -99,11 +99,7 @@ const Index: Component = () => {
     <MainLayout>
       <div class="space-y-6">
         {/* Breadcrumb */}
-        <Breadcrumb
-          items={[
-            { label: "Servers" }
-          ]}
-        />
+        <Breadcrumb items={[{ label: "Servers" }]} />
 
         {/* Header */}
         <div class="flex items-center justify-between">

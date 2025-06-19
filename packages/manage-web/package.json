@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.830.0",
+    "@aws-sdk/client-lambda": "^3.830.0",
+    "@aws-sdk/client-sfn": "^3.830.0",
     "@aws-sdk/lib-dynamodb": "^3.830.0",
     "@kobalte/core": "^0.13.10",
     "@solidjs/router": "^0.15.3",
