@@ -4,6 +4,7 @@ export const createServerPK = (serverId: string): string =>
 
 // SK 생성 함수들
 export const createServerSK = (): string => "METADATA";
+export const createToolSK = (toolId: string): string => `TOOL#${toolId}`;
 
 // GSI 키 생성 함수들
 export const createCreatedAtId = (createdAt: string, id: string): string =>
@@ -23,4 +24,5 @@ export const generateShortId = (): string => {
 // EntityType 상수들
 export const ENTITY_TYPES = {
   SERVER: "SERVER",
+  TOOL: "TOOL",
 } as const;

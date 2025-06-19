@@ -2,12 +2,14 @@ import { Component, Show, createSignal } from "solid-js";
 import { useParams, useNavigate } from "@solidjs/router";
 import { createAsync, query, useAction } from "@solidjs/router";
 import { MainLayout } from "@/components/layout";
-import { getItemByKey } from "@/db/dynamodb";
+import { getItemByKey, queryToolsByServerId } from "@/db/dynamodb";
 import { createServerPK, createServerSK } from "@/db/helper";
 import { McpServerDdbItem } from "@/types/server";
+import { McpToolDdbItem } from "@/types/tool";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Edit, Trash2 } from "lucide-solid";
+import { ChevronLeft } from "lucide-solid";
 import { ServerDetailCard } from "@/components/server/ServerDetailCard";
+import { ToolTable } from "@/components/tool/ToolTable";
 import { ServerFormSheet } from "@/components/sheet/ServerFormSheet";
 import { ConfirmDialog } from "@/components/dialog/ConfirmDialog";
 import { updateServer, deleteServer } from "@/actions/server";
@@ -21,14 +23,20 @@ const getServer = query(async (id: string) => {
   return await getItemByKey<McpServerDdbItem>(key);
 }, "server");
 
+const getServerTools = query(async (serverId: string) => {
+  "use server";
+  return await queryToolsByServerId(serverId);
+}, "serverTools");
+
 const ServerDetail: Component = () => {
   const params = useParams();
   const navigate = useNavigate();
   const server = createAsync(() => getServer(params.id));
-  
+  const tools = createAsync(() => getServerTools(params.id));
+
   const [sheetOpen, setSheetOpen] = createSignal(false);
   const [confirmDialogOpen, setConfirmDialogOpen] = createSignal(false);
-  
+
   const updateServerAction = useAction(updateServer);
   const deleteServerAction = useAction(deleteServer);
 
@@ -38,6 +46,16 @@ const ServerDetail: Component = () => {
       await deleteServerAction(currentServer);
       navigate("/servers");
     }
+  };
+
+  const handleToolEdit = (tool: McpToolDdbItem) => {
+    // TODO: Tool 수정 기능 구현
+    console.log("Edit tool:", tool);
+  };
+
+  const handleToolDelete = (tool: McpToolDdbItem) => {
+    // TODO: Tool 삭제 기능 구현
+    console.log("Delete tool:", tool);
   };
 
   return (
@@ -58,7 +76,6 @@ const ServerDetail: Component = () => {
                 variant="outline"
                 size="sm"
               >
-                <Edit class="h-4 w-4 mr-2" />
                 Edit
               </Button>
               <Button
@@ -67,7 +84,6 @@ const ServerDetail: Component = () => {
                 size="sm"
                 class="text-destructive hover:text-destructive"
               >
-                <Trash2 class="h-4 w-4 mr-2" />
                 Delete
               </Button>
             </div>
@@ -88,11 +104,38 @@ const ServerDetail: Component = () => {
           <ServerDetailCard server={server()!} />
         </Show>
 
+        {/* Tools Section */}
+        <Show when={server()}>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="text-xl font-semibold">Tools</h2>
+              <Button>Add Tool</Button>
+            </div>
+
+            <Show
+              when={tools()}
+              fallback={
+                <div class="rounded-lg border bg-card">
+                  <div class="p-6 text-center text-muted-foreground">
+                    <div class="animate-pulse">Loading tools...</div>
+                  </div>
+                </div>
+              }
+            >
+              <ToolTable
+                tools={tools()!}
+                onEdit={handleToolEdit}
+                onDelete={handleToolDelete}
+              />
+            </Show>
+          </div>
+        </Show>
+
         {/* Edit Sheet */}
         <ServerFormSheet
           open={sheetOpen()}
           setOpen={setSheetOpen}
-          onEdit={async (data) => {
+          onEdit={async data => {
             const currentServer = server();
             if (currentServer) {
               await updateServerAction(currentServer, data);

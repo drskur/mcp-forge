@@ -1,5 +1,5 @@
 import { Component } from "solid-js";
-import { MoreVertical, Edit, Trash2 } from "lucide-solid";
+import { MoreVertical } from "lucide-solid";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,16 +36,12 @@ export const ServerActionsMenu: Component<ServerActionsMenuProps> = props => {
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onClick={handleEdit}>
-          <Edit class="mr-2 h-4 w-4" />
-          Edit
-        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleEdit}>Edit</DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={handleDelete}
           class="text-destructive focus:text-destructive"
         >
-          <Trash2 class="mr-2 h-4 w-4" />
           Delete
         </DropdownMenuItem>
       </DropdownMenuContent>

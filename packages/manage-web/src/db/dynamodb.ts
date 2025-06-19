@@ -9,7 +9,9 @@ import {
   GetCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { McpServerDdbItem } from "@/types/server";
+import { McpToolDdbItem } from "@/types/tool";
 import { ENTITY_TYPES } from "./helper";
+import { DynamoDbItem } from "@/types/dynamodb";
 
 const TABLE_NAME = process.env.TABLE_NAME;
 const AWS_REGION = import.meta.env.AWS_REGION || "us-east-1";
@@ -21,7 +23,7 @@ const client = new DynamoDBClient({
 
 const docClient = DynamoDBDocumentClient.from(client);
 
-export const putItem = async (item: McpServerDdbItem): Promise<void> => {
+export const putItem = async (item: DynamoDbItem): Promise<void> => {
   const tableName = TABLE_NAME;
 
   if (!tableName) {
@@ -109,7 +111,7 @@ export const deleteItem = async (PK: string, SK: string): Promise<void> => {
   }
 };
 
-export const getItemByKey = async <T extends McpServerDdbItem>(
+export const getItemByKey = async <T extends DynamoDbItem>(
   key: { PK: string; SK: string }
 ): Promise<T | null> => {
   const tableName = TABLE_NAME;
@@ -129,6 +131,33 @@ export const getItemByKey = async <T extends McpServerDdbItem>(
     return (response.Item as T) || null;
   } catch (error) {
     console.error("Failed to get item from DynamoDB:", error);
+    throw error;
+  }
+};
+
+// 특정 서버의 모든 툴 조회
+export const queryToolsByServerId = async (serverId: string): Promise<McpToolDdbItem[]> => {
+  const tableName = TABLE_NAME;
+
+  if (!tableName) {
+    throw new Error("TABLE_NAME environment variable is not set");
+  }
+
+  try {
+    const response = await docClient.send(
+      new QueryCommand({
+        TableName: tableName,
+        KeyConditionExpression: "PK = :pk AND begins_with(SK, :skPrefix)",
+        ExpressionAttributeValues: {
+          ":pk": `SERVER#${serverId}`,
+          ":skPrefix": "TOOL#",
+        },
+      })
+    );
+
+    return (response.Items as McpToolDdbItem[]) || [];
+  } catch (error) {
+    console.error("Failed to query tools from DynamoDB:", error);
     throw error;
   }
 };
